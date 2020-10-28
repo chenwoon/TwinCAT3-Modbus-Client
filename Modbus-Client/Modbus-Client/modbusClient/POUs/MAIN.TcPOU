@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="MAIN" Id="{6f91a55c-4acf-4297-9360-66001aa5882b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+	ipAddr         : STRING(15) := '127.0.0.1';
+	nValue         : ARRAY [0..3] OF WORD:= [0,10,100,1000];
+	fbWriteRegs    : FB_MBWriteRegs;
+	bWriteRegs     : BOOL;
+	
+	rValue		   : ARRAY [0..1] OF WORD;
+	fbReadRegs	: FB_MBReadRegs;
+	bReadRegs	: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF NOT bWriteRegs THEN
+        nValue[0]:= nValue[0]+1;
+        nValue[1]:= nValue[1]+1;
+        nValue[2]:= nValue[2]+1;
+        nValue[3]:= nValue[3]+1;
+        bWriteRegs :=TRUE;
+        fbWriteRegs.sIPAddr :=ipAddr;
+		fbWriteRegs.nTCPPort := 501;
+        fbWriteRegs.nQuantity := 4;
+
+		fbWriteRegs.nMBAddr := 16#00;
+        fbWriteRegs.cbLength := SIZEOF(nValue);
+        fbWriteRegs.pSrcAddr := ADR(nValue);
+        fbWriteRegs.tTimeout := T#5S;
+        fbWriteRegs(bExecute:=TRUE);
+		
+ELSE
+       IF NOT fbWriteRegs.bBUSY THEN
+           bWriteRegs :=FALSE;
+       END_IF
+           fbWriteRegs(bExecute:=FALSE);
+END_IF
+
+IF NOT bReadRegs THEN
+		bReadRegs := TRUE;
+		fbReadRegs.sIPAddr :=ipAddr;
+		fbReadRegs.nTCPPort := 501;
+		fbReadRegs.nQuantity := 2;
+		fbReadRegs.nMBAddr := 16#04;
+		fbReadRegs.cbLength := SIZEOF(rValue);
+		fbReadRegs.pDestAddr := ADR(rValue);
+		fbReadRegs.tTimeout := T#5S;
+		fbReadRegs(bExecute:=TRUE);
+ELSE
+		IF NOT fbReadRegs.bBusy THEN
+			bReadRegs := FALSE;
+		END_IF
+			fbReadRegs(bExecute:=FALSE);
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN">
+      <LineId Id="16" Count="37" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
